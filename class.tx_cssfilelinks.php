@@ -53,13 +53,7 @@
  * (This index is automatically created/updated by the extension "extdeveval")
  *
  */
-
-
-	//require_once(PATH_tslib."class.tslib_pibase.php");
-
-	class tx_cssfilelinks extends tslib_pibase {
-
-
+class tx_cssfilelinks extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 	/**
 	 * Return files from dam reference field (this is used for generating filelist field which TCA was overriden by CSS MULTIMEDIA)
 	 *
@@ -67,11 +61,12 @@
 	 * @param	array		$conf: ...
 	 * @return	string		comma list of files with path
 	 */
-		function fetchFileList ($content, $conf) {
-			$refField = trim($this->cObj->stdWrap($conf['refField'],$conf['refField.']));
-			$damFiles = tx_dam_db::getReferencedFiles('tt_content', $this->cObj->data['uid'], $refField);
-			return implode(',',$damFiles['files']);
-		}
+	public function fetchFileList ($content, $conf)
+	{
+		$refField = trim($this->cObj->stdWrap($conf['refField'],$conf['refField.']));
+		$damFiles = tx_dam_db::getReferencedFiles('tt_content', $this->cObj->data['uid'], $refField);
+		return implode(',',$damFiles['files']);
+	}
 
 	/**
 	 * Return a array of fileextensions with additional class:
@@ -81,25 +76,26 @@
 	 * @param	array		$confAdditionalClass: An array obtained from 'additionalClass.' (see abowe)
 	 * @return	array		New array where the ext are used as key (see abowe)
 	 */
-		function getAdditionalClass($confAdditionalClass){
-			if ($hookObj = &$this->hookRequest('getAdditionalClass'))	{
-				return $hookObj->getAdditionalClass($confAdditionalClass);
-			} else {
-				$additionalClass=array();
-				if(count($confAdditionalClass)>0){
-					while(list($key,$val)=each($confAdditionalClass)){
-						$val=trim($val,',');
-						if($val!=''){
-							$fileExts=\TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',',$val);
-							foreach($fileExts as $classes){
-								$additionalClass[$classes].=' '.$key;
-							};
+	public function getAdditionalClass($confAdditionalClass)
+	{
+		if ($hookObj = &$this->hookRequest('getAdditionalClass'))	{
+			return $hookObj->getAdditionalClass($confAdditionalClass);
+		} else {
+			$additionalClass=array();
+			if(count($confAdditionalClass)>0){
+				while(list($key,$val)=each($confAdditionalClass)){
+					$val=trim($val,',');
+					if($val!=''){
+						$fileExts=\TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',',$val);
+						foreach($fileExts as $classes){
+							$additionalClass[$classes].=' '.$key;
 						};
 					};
 				};
-				return $additionalClass;
 			};
-		}
+			return $additionalClass;
+		};
+	}
 
 	/**
 	 * Return filesize and filesizeformat depending on the $conf:
@@ -108,60 +104,61 @@
 	 * @param	array		$conf: 'tt_content.uploads.20.layout.fileSize.' this array contain the formating options for filesize
 	 * @return	array		Returns a array('size'=>file size,'sizeformat'=>file size format e.g. kb)
 	 */
-		function FileSizeFormat($fileSize,$conf){
-			if ($hookObj = &$this->hookRequest('FileSizeFormat'))	{
-				return $hookObj->FileSizeFormat($fileSize,$conf);
-			} else {
-				/* get the conf begin */
-					$fileSizeChar=trim($conf['char']);
-					if($fileSizeChar==''){$fileSizeChar='lower';};
-					$fileSizeFormat=trim($conf['format']);
-					if($fileSizeFormat==''){$fileSizeFormat='auto';};
-					$fileSizeDesc=trim($conf['desc']);
-					if($fileSizeDesc==''){$fileSizeDesc='b|kb|mb';};
-					$fileSizeDesc=\TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode('|',$fileSizeDesc);
-					$fileSizeRound=trim($conf['round']);
-					if($fileSizeRound==''){$fileSizeRound=2;};
-				/* get the conf end */
+	public function FileSizeFormat($fileSize,$conf)
+	{
+		if ($hookObj = &$this->hookRequest('FileSizeFormat'))	{
+			return $hookObj->FileSizeFormat($fileSize,$conf);
+		} else {
+			/* get the conf begin */
+			$fileSizeChar=trim($conf['char']);
+			if($fileSizeChar==''){$fileSizeChar='lower';};
+			$fileSizeFormat=trim($conf['format']);
+			if($fileSizeFormat==''){$fileSizeFormat='auto';};
+			$fileSizeDesc=trim($conf['desc']);
+			if($fileSizeDesc==''){$fileSizeDesc='b|kb|mb';};
+			$fileSizeDesc=\TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode('|',$fileSizeDesc);
+			$fileSizeRound=trim($conf['round']);
+			if($fileSizeRound==''){$fileSizeRound=2;};
+			/* get the conf end */
+			$fileSizeFormatOut=$fileSizeDesc[0];
+			if(($fileSizeFormat=='kb')||($fileSizeFormat=='mb')){$fileSize=$fileSize/1024;$fileSizeFormatOut=$fileSizeDesc[1];};
+			if($fileSizeFormat=='mb'){$fileSize=$fileSize/1024;$fileSizeFormatOut=$fileSizeDesc[2];};
+			if($fileSizeFormat=='auto'){
+				$fileSizeOut=$fileSize;
 				$fileSizeFormatOut=$fileSizeDesc[0];
-				if(($fileSizeFormat=='kb')||($fileSizeFormat=='mb')){$fileSize=$fileSize/1024;$fileSizeFormatOut=$fileSizeDesc[1];};
-				if($fileSizeFormat=='mb'){$fileSize=$fileSize/1024;$fileSizeFormatOut=$fileSizeDesc[2];};
-				if($fileSizeFormat=='auto'){
-					$fileSizeOut=$fileSize;
-					$fileSizeFormatOut=$fileSizeDesc[0];
+				if(intval($fileSizeOut/1024)>0){
+					$fileSizeOut=($fileSizeOut/1024);
+					$fileSizeFormatOut=$fileSizeDesc[1];
 					if(intval($fileSizeOut/1024)>0){
 						$fileSizeOut=($fileSizeOut/1024);
-						$fileSizeFormatOut=$fileSizeDesc[1];
-						if(intval($fileSizeOut/1024)>0){
-							$fileSizeOut=($fileSizeOut/1024);
-							$fileSizeFormatOut=$fileSizeDesc[2];
-						};
-					};
-					$fileSize=$fileSizeOut;
-				};
-				if($fileSizeChar!='none'){
-					$fileSizeFormatOut=strtolower($fileSizeFormatOut);
-					if($fileSizeChar=='upper'){
-						$fileSizeFormatOut=strtoupper($fileSizeFormatOut);
-					};
-					if($fileSizeChar=='firstUpper'){
-						$fileSizeFormatOut[0]=strtoupper($fileSizeFormatOut[0]);
-					};
-					if($fileSizeChar=='firstLower'){
-						$fileSizeFormatOut=strtoupper($fileSizeFormatOut);
-						$fileSizeFormatOut[0]=strtolower($fileSizeFormatOut[0]);
+						$fileSizeFormatOut=$fileSizeDesc[2];
 					};
 				};
-				$return_fileSize['size']=round($fileSize,$fileSizeRound);
-				$return_fileSize['sizeformat']=$fileSizeFormatOut;
-
-				/* make the decimal point */
-				if($conf['decimalPoint']!=''){
-					$return_fileSize=str_replace('.',$conf['decimalPoint'],$return_fileSize);
-				}
-				return $return_fileSize;
+				$fileSize=$fileSizeOut;
 			};
-		}
+			if($fileSizeChar!='none'){
+				$fileSizeFormatOut=strtolower($fileSizeFormatOut);
+				if($fileSizeChar=='upper'){
+					$fileSizeFormatOut=strtoupper($fileSizeFormatOut);
+				};
+				if($fileSizeChar=='firstUpper'){
+					$fileSizeFormatOut[0]=strtoupper($fileSizeFormatOut[0]);
+				};
+				if($fileSizeChar=='firstLower'){
+					$fileSizeFormatOut=strtoupper($fileSizeFormatOut);
+					$fileSizeFormatOut[0]=strtolower($fileSizeFormatOut[0]);
+				};
+			};
+			$return_fileSize['size']=round($fileSize,$fileSizeRound);
+			$return_fileSize['sizeformat']=$fileSizeFormatOut;
+
+			/* make the decimal point */
+			if($conf['decimalPoint']!=''){
+				$return_fileSize=str_replace('.',$conf['decimalPoint'],$return_fileSize);
+			}
+			return $return_fileSize;
+		};
+	}
 
 	/**
 	 * return layout with filled file markers
@@ -173,40 +170,41 @@
 	 * @param	array		$fileext: file extension
 	 * @return	strin		layout with filled file markers
 	 */
-		function fillFileMarkers($fileFileMarkers,$fileLayout,$file,$fileCount,$fileext){
-			if ($hookObj = &$this->hookRequest('fillFileMarkers'))	{
-				return $hookObj->fillFileMarkers($fileFileMarkers,$fileLayout,$file,$fileCount,$fileext);
-			} else {
-				$_fileFileMarkers=$fileFileMarkers['file.'];
-				if(count($_fileFileMarkers)>0){
-					while(list($key,$val)=each($_fileFileMarkers)){
-						if(is_array($val)){
-							$_fileFileMarkers[$key]['markerData.']['dam']=intval($file['dam']);
-							$_fileFileMarkers[$key]['markerData.']['fileUrl']=$file['url'];
-							$_fileFileMarkers[$key]['markerData.']['fileName']=$file['filename'];
-							$_fileFileMarkers[$key]['markerData.']['fileTitle']=$file['title'];
-							$_fileFileMarkers[$key]['markerData.']['fileSize']=$file['size'];
-							$_fileFileMarkers[$key]['markerData.']['fileExt']=$fileext;
-							$_fileFileMarkers[$key]['markerData.']['fileCount']=$fileCount;
-							$_fileFileMarkers[$key]['markerData.']['fileLayout']=$this->cObj->data['layout'];
-						};
-					};
-					reset($_fileFileMarkers);
-					while(list($key,$val)=each($_fileFileMarkers)){
-							if(!is_array($val)){
-							$fileLayout=str_replace('###'.$key.'###',$this->cObj->cObjGetSingle($_fileFileMarkers[$key],$_fileFileMarkers[$key.'.'],$key),$fileLayout);
-						};
+	public function fillFileMarkers($fileFileMarkers,$fileLayout,$file,$fileCount,$fileext)
+	{
+		if ($hookObj = &$this->hookRequest('fillFileMarkers'))	{
+			return $hookObj->fillFileMarkers($fileFileMarkers,$fileLayout,$file,$fileCount,$fileext);
+		} else {
+			$_fileFileMarkers=$fileFileMarkers['file.'];
+			if(count($_fileFileMarkers)>0){
+				while(list($key,$val)=each($_fileFileMarkers)){
+					if(is_array($val)){
+						$_fileFileMarkers[$key]['markerData.']['dam']=intval($file['dam']);
+						$_fileFileMarkers[$key]['markerData.']['fileUrl']=$file['url'];
+						$_fileFileMarkers[$key]['markerData.']['fileName']=$file['filename'];
+						$_fileFileMarkers[$key]['markerData.']['fileTitle']=$file['title'];
+						$_fileFileMarkers[$key]['markerData.']['fileSize']=$file['size'];
+						$_fileFileMarkers[$key]['markerData.']['fileExt']=$fileext;
+						$_fileFileMarkers[$key]['markerData.']['fileCount']=$fileCount;
+						$_fileFileMarkers[$key]['markerData.']['fileLayout']=$this->cObj->data['layout'];
 					};
 				};
-				$hookObjs=$this->hookRequestMore('fillFileMarkers');
-				if((is_array($hookObjs))&&(count($hookObjs)>0)){
-					foreach($hookObjs as $hObjs){
-						$fileLayout=$hObjs->fillFileMarkers($fileFileMarkers,$fileLayout,$file,$fileCount,$fileext);
-					}
+				reset($_fileFileMarkers);
+				while(list($key,$val)=each($_fileFileMarkers)){
+					if(!is_array($val)){
+						$fileLayout=str_replace('###'.$key.'###',$this->cObj->cObjGetSingle($_fileFileMarkers[$key],$_fileFileMarkers[$key.'.'],$key),$fileLayout);
+					};
 				};
-				return $fileLayout;
 			};
-		}
+			$hookObjs=$this->hookRequestMore('fillFileMarkers');
+			if((is_array($hookObjs))&&(count($hookObjs)>0)){
+				foreach($hookObjs as $hObjs){
+					$fileLayout=$hObjs->fillFileMarkers($fileFileMarkers,$fileLayout,$file,$fileCount,$fileext);
+				}
+			};
+			return $fileLayout;
+		};
+	}
 
 
 	/**
@@ -217,33 +215,34 @@
 	 * @param	array		$fileCount: filecounter
 	 * @return	strin		layout with willed file markers
 	 */
-		function fillGlobalMarkers($fileGlobalMarkers,$globalLayout,$fileCount){
-			if ($hookObj = &$this->hookRequest('fillGlobalMarkers'))	{
-				return $hookObj->fillGlobalMarkers($fileGlobalMarkers,$globalLayout,$fileCount);
-			} else {
-				if(count($fileGlobalMarkers)>0){
-					while(list($key,$val)=each($fileGlobalMarkers)){
-						if(is_array($val)){
-							$fileGlobalMarkers[$key]['markerData.']['fileCount']=$fileCount;
-							$fileGlobalMarkers[$key]['markerData.']['fileLayout']=$this->cObj->data['layout'];
-						};
-					};
-					reset($fileGlobalMarkers);
-					while(list($key,$val)=each($fileGlobalMarkers)){
-						if(!is_array($val)){
-							$globalLayout=str_replace('###'.$key.'###',$this->cObj->cObjGetSingle($fileGlobalMarkers[$key],$fileGlobalMarkers[$key.'.'],$key),$globalLayout);
-						};
+	public function fillGlobalMarkers($fileGlobalMarkers,$globalLayout,$fileCount)
+	{
+		if ($hookObj = &$this->hookRequest('fillGlobalMarkers'))	{
+			return $hookObj->fillGlobalMarkers($fileGlobalMarkers,$globalLayout,$fileCount);
+		} else {
+			if(count($fileGlobalMarkers)>0){
+				while(list($key,$val)=each($fileGlobalMarkers)){
+					if(is_array($val)){
+						$fileGlobalMarkers[$key]['markerData.']['fileCount']=$fileCount;
+						$fileGlobalMarkers[$key]['markerData.']['fileLayout']=$this->cObj->data['layout'];
 					};
 				};
-				$hookObjs=$this->hookRequestMore('fillGlobalMarkers');
-				if((is_array($hookObjs))&&(count($hookObjs)>0)){
-					foreach($hookObjs as $hObjs){
-						$globalLayout=$hObjs->fillGlobalMarkers($fileGlobalMarkers,$globalLayout,$fileCount);
-					}
+				reset($fileGlobalMarkers);
+				while(list($key,$val)=each($fileGlobalMarkers)){
+					if(!is_array($val)){
+						$globalLayout=str_replace('###'.$key.'###',$this->cObj->cObjGetSingle($fileGlobalMarkers[$key],$fileGlobalMarkers[$key.'.'],$key),$globalLayout);
+					};
 				};
-				return $globalLayout;
 			};
-		}
+			$hookObjs=$this->hookRequestMore('fillGlobalMarkers');
+			if((is_array($hookObjs))&&(count($hookObjs)>0)){
+				foreach($hookObjs as $hObjs){
+					$globalLayout=$hObjs->fillGlobalMarkers($fileGlobalMarkers,$globalLayout,$fileCount);
+				}
+			};
+			return $globalLayout;
+		};
+	}
 
 
 	/**
@@ -254,9 +253,10 @@
 	 * @param	array		$record: record with all informations about the file
 	 * @return	string		url
 	 */
-	function getFileUrl($url,$conf,$record){
+	public function getFileUrl($url,$conf,$record)
+	{
 		if ($hookObj = &$this->hookRequest('getFileUrl'))	{
-				return $hookObj->getFileUrl($url,$conf,$record);
+			return $hookObj->getFileUrl($url,$conf,$record);
 		} else {
 			$output = '';
 			$initP = '?id='.$GLOBALS['TSFE']->id.'&type='.$GLOBALS['TSFE']->type;
@@ -276,9 +276,10 @@
 	 * @param	array		TypoScript configuration
 	 * @return	string		HTML output.
 	 */
-	function getFilesForCssUploads($conf){
+	public function getFilesForCssUploads($conf)
+	{
 		if ($hookObj = &$this->hookRequest('getFilesForCssUploads'))	{
-				return $hookObj->getFilesForCssUploads($conf);
+			return $hookObj->getFilesForCssUploads($conf);
 		} else {
 			/* get the standard field begin */
 			$path=$this->cObj->stdWrap($conf['fileList.']['path'],$conf['fileList.']['path.']);
@@ -290,18 +291,18 @@
 			/* get the standard field end */
 			/* If the css_multimedia is installet it turns the media field to dam field.
 			 * Therefore i must check if this is the case and if yes then i must return the DAM reference */
-				if($GLOBALS['T3_VAR']['ext']['css_filelinks']['setup']['default_dam']==1 && \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('dam') && \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('css_styled_multimedia')){
-					$files_get=$this->fetchFileList('',array('refField'=>'media'));
-					if(is_array($conf['fileList.']['override.'])){
-						$files_get2=$this->cObj->stdWrap($files_get,array('override.'=>$conf['fileList.']['override.']));
-					};
-					$separatePathFromFile=true;
-					//if the overide has get some ressults
-					if($files_get!=$files_get2){
-						$separatePathFromFile=false;
-						$files_get=$files_get2;
-					};
+			if($GLOBALS['T3_VAR']['ext']['css_filelinks']['setup']['default_dam']==1 && \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('dam') && \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('css_styled_multimedia')){
+				$files_get=$this->fetchFileList('',array('refField'=>'media'));
+				if(is_array($conf['fileList.']['override.'])){
+					$files_get2=$this->cObj->stdWrap($files_get,array('override.'=>$conf['fileList.']['override.']));
 				};
+				$separatePathFromFile=true;
+					//if the overide has get some ressults
+				if($files_get!=$files_get2){
+					$separatePathFromFile=false;
+					$files_get=$files_get2;
+				};
+			};
 			/* dam reference end */
 			$files_arr=\TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(",",$files_get);
 			$descriptionField = $this->cObj->stdWrap($conf['description'],$conf['description.']);
@@ -344,9 +345,10 @@
 	 * @param	[type]		$theFile: ...
 	 * @return	string		HTML output image.
 	 */
-	function getIcon($fileExt,$conf,$theFile){
+	public function getIcon($fileExt,$conf,$theFile)
+	{
 		if ($hookObj = &$this->hookRequest('getIcon'))	{
-				return $hookObj->getIcon($fileExt,$conf,$theFile);
+			return $hookObj->getIcon($fileExt,$conf,$theFile);
 		} else {
 			$altIconP = $conf['alternativeIconPath'];
 			$iconP = 't3lib/gfx/fileicons/';
@@ -411,146 +413,148 @@
 	 * @param	array		TypoScript configuration
 	 * @return	string		HTML output.
 	 */
-		function renderFileLinks($content,$conf){
-			if ($hookObj = &$this->hookRequest('renderFileLinks'))	{
-				return $hookObj->renderFileLinks($content,$conf);
-			} else {
-				$files_all=$this->getFilesForCssUploads($conf);
-				$additionalClass=$this->getAdditionalClass($conf['additionalClass.']);
-				/* layout from conf and default BEGIN */
-					$fileLinksLayout=$this->cObj->data['layout'];
-					$globalLayout=$this->cObj->stdWrap($conf['layout.']['global'],$conf['layout.']['global.']);
-					if($globalLayout==''){$globalLayout='<div class="filelinks filelinks_layout_###LAYOUT###"><span class="filecount">There are ###FILECOUNT### files.</span>###FILE###</div>';};
-					$fileLayout=$this->cObj->stdWrap($conf['layout.']['file'],$conf['layout.']['file.']);
-					if($fileLayout==''){$fileLayout='<div class="###CLASS###"><span><a href="###URL###" ###TARGET###>###TITLE###</a> ###FILESIZE###</span><span>###DESCRIPTION###</span></div>';};
-					$fileSizeLayout=$this->cObj->stdWrap($conf['layout.']['fileSize.']['layout'],$conf['layout.']['fileSize.']['layout']);
-					if($fileSizeLayout==''){$fileSizeLayout='(###SIZE### ###SIZEFORMAT###)';};
-				/* layout from conf and default END */
-				$fileCount=count($files_all);
-				if(strpos($fileLayout,'###ICON###')!==false){$useIcon=true;}else{$useIcon=false;}
-				$return_files=array();
-				$search['target']='###TARGET###';
-				$search['fileext']='###FILEEXT###';
-				$search['additionalclass']='###ADDITIONALCLASS###';
-				$search['firstlastoddeven']='###FIRSTLASTODDEVEN###';
-				$search['class']='###CLASS###';
-				if($useIcon){$search['icon']='###ICON###';}
-				$search['url']='###URL###';
-				$search['title']='###TITLE###';
-				$search['counter']='###COUNTER###';
-				$search['size']='###SIZE###';
-				$search['sizeformat']='###SIZEFORMAT###';
-				$search['filename']='###FILENAME###';
-				if(intval($this->cObj->data['filelink_size'])>0){
-					$fileLayout=str_replace('###FILESIZE###',$fileSizeLayout,$fileLayout);
-				}else{
-					$fileLayout=str_replace('###FILESIZE###','',$fileLayout);
-				};
-
-				$fileCounter=1;
-				if(!@is_array($files_all)){
-					$files_all=array();
-				};
-				reset($files_all);
-				$odd=true;
-				foreach($files_all as $file){
-					$fileLayouTemp=$fileLayout;
-					$replace['target']=$conf['linkProc.']['target']?' target="'.$conf['linkProc.']['target'].'"':'';
-					/* class begin */
-					$fileinfo = \TYPO3\CMS\Core\Utility\GeneralUtility::split_fileref($file['filename']);
-					/* fileExt begin */
-					$fileExt=trim($fileinfo['fileext']);
-					if(\TYPO3\CMS\Core\Utility\GeneralUtility::testInt(substr($fileExt,0,1))&&$conf['classes.']['ext.']['prefixIfFirstNumber']!=''){
-						$fileExt=$conf['classes.']['ext.']['prefixIfFirstNumber'].$fileExt;
-					};
-					$replace['fileext']=$fileExt;
-					/* fileExt end */
-					/* fileExt config begin */
-                    $extFileLayout=$this->cObj->stdWrap($conf['layout.']['filetype.'][strtolower($fileExt)],$conf['layout.']['filetype.'][strtolower($fileExt).'.']);
-                    if($extFileLayout!=''){
-                        if(strpos($extFileLayout,'###ICON###')!==false){$useIcon=true;}else{$useIcon=false;}
-                        if($useIcon){$search['icon']='###ICON###';}
-                        if(intval($this->cObj->data['filelink_size'])>0){
-                            $extFileLayout=str_replace('###FILESIZE###',$fileSizeLayout,$extFileLayout);
-                        }else{
-                            $extFileLayout=str_replace('###FILESIZE###','',$extFileLayout);
-                        };
-                        $fileLayouTemp=$extFileLayout;
-                    }
-                    /* fileExt config end */
-                    $fileLayouTemp=str_replace('###DESCRIPTION###',$file['description'],$fileLayouTemp);// aby som mohol zamenit description
-					/* additionalClass begin */
-						$replace['additionalclass']=trim($additionalClass[trim($fileinfo['fileext'])]);
-					/* additional class end */
-					/* firstlastoddeven begin */
-						$firstlastoddeven='';
-						if((intval($conf['classes.']['addFirst'])==1)&&($fileCounter==1)){$firstlastoddeven.=' first';};
-						if((intval($conf['classes.']['addOdd'])==1)&&($odd)){
-							$firstlastoddeven.=' odd';
-							$odd=false;
-						}else{
-							if(intval($conf['classes.']['addEven'])==1){
-								$firstlastoddeven.=' even';
-								$odd=true;
-							};
-						};
-						if((intval($conf['classes.']['addLast'])==1)&&($fileCounter==$fileCount)){$firstlastoddeven.=' last';};
-						$replace['firstlastoddeven']=trim($firstlastoddeven);
-					/* firstlastoddeven end */
-						$class=$fileExt;
-						if($additionalClassOut!=''){$class.=' '.$additionalClassOut;};
-						if(trim($firstlastoddeven)!=''){$class.=' '.trim($firstlastoddeven);};
-						$replace['class']=$class;
-					/* class end */
-					if($useIcon){
-						$GLOBALS['TSFE']->register['ICON_REL_PATH'] = $file['url'];
-						//$replace['icon']=$this->getIcon($replace['fileext'],$conf['linkProc.']);
-						$replace['icon']=$this->getIcon($replace['fileext'],$conf['linkProc.'],$file['url']);
-					}
-					$replace['url']=$this->getFileUrl($file['url'],$conf['linkProc.'],$file);
-					$replace['title']=trim($file['title']);
-					if($conf['title.']['trimExt']){
-						$replace['title']=substr($replace['title'],0,-(strlen($replace['fileext'])+1));
-					}
-					$replace['counter']=$fileCounter;
-
-					$fileSizeFormat=$this->FileSizeFormat(trim($file['size']),$conf['layout.']['fileSize.']);
-					$replace['size']=$fileSizeFormat['size'];
-					$replace['sizeformat']=$fileSizeFormat['sizeformat'];
-					$replace['filename']=$file['filename'];
-
-					$fileLayouTemp=$this->fillFileMarkers($conf['layout.']['userMarker.'],$fileLayouTemp,$file,$fileCount,$fileExt);
-					$return_files[]=str_replace($search,$replace,$fileLayouTemp);
-					$fileCounter++;
-				};
-				/* global markers BEGIN */
-				$globalLayout=$this->fillGlobalMarkers($conf['layout.']['userMarker.']['global.'],$globalLayout,$fileCount);
-				$return_content=str_replace('###FILE###',implode(' ',$return_files),$globalLayout);
-				$return_content=str_replace('###FILECOUNT###',$fileCount,$return_content);
-				$return_content=str_replace('###LAYOUT###',$fileLinksLayout,$return_content);
-				/* global markers END */
-				/* hide not processed markers begin */
-				if(intval($conf['layout.']['hideNotProcessedMarkers'])==1){
-					$return_content=preg_replace('/###([a-zA-Z0-9_-]*)###/','',$return_content);
-				};
-				/* hide not processed markers end */
-				/* editicon begin */
-				if ($conf['stdWrap.']) {
-					$return_content = $this->cObj->stdWrap($return_content, $conf['stdWrap.']);
-				}
-				/* editicons end */
-
-				return $return_content;
+	public function renderFileLinks($content,$conf)
+	{
+		if ($hookObj = &$this->hookRequest('renderFileLinks'))	{
+			return $hookObj->renderFileLinks($content,$conf);
+		} else {
+			$files_all=$this->getFilesForCssUploads($conf);
+			$additionalClass=$this->getAdditionalClass($conf['additionalClass.']);
+			/* layout from conf and default BEGIN */
+			$fileLinksLayout=$this->cObj->data['layout'];
+			$globalLayout=$this->cObj->stdWrap($conf['layout.']['global'],$conf['layout.']['global.']);
+			if($globalLayout==''){$globalLayout='<div class="filelinks filelinks_layout_###LAYOUT###"><span class="filecount">There are ###FILECOUNT### files.</span>###FILE###</div>';};
+			$fileLayout=$this->cObj->stdWrap($conf['layout.']['file'],$conf['layout.']['file.']);
+			if($fileLayout==''){$fileLayout='<div class="###CLASS###"><span><a href="###URL###" ###TARGET###>###TITLE###</a> ###FILESIZE###</span><span>###DESCRIPTION###</span></div>';};
+			$fileSizeLayout=$this->cObj->stdWrap($conf['layout.']['fileSize.']['layout'],$conf['layout.']['fileSize.']['layout']);
+			if($fileSizeLayout==''){$fileSizeLayout='(###SIZE### ###SIZEFORMAT###)';};
+			/* layout from conf and default END */
+			$fileCount=count($files_all);
+			if(strpos($fileLayout,'###ICON###')!==false){$useIcon=true;}else{$useIcon=false;}
+			$return_files=array();
+			$search['target']='###TARGET###';
+			$search['fileext']='###FILEEXT###';
+			$search['additionalclass']='###ADDITIONALCLASS###';
+			$search['firstlastoddeven']='###FIRSTLASTODDEVEN###';
+			$search['class']='###CLASS###';
+			if($useIcon){$search['icon']='###ICON###';}
+			$search['url']='###URL###';
+			$search['title']='###TITLE###';
+			$search['counter']='###COUNTER###';
+			$search['size']='###SIZE###';
+			$search['sizeformat']='###SIZEFORMAT###';
+			$search['filename']='###FILENAME###';
+			if(intval($this->cObj->data['filelink_size'])>0){
+				$fileLayout=str_replace('###FILESIZE###',$fileSizeLayout,$fileLayout);
+			}else{
+				$fileLayout=str_replace('###FILESIZE###','',$fileLayout);
 			};
-		}
+
+			$fileCounter=1;
+			if(!@is_array($files_all)){
+				$files_all=array();
+			};
+			reset($files_all);
+			$odd=true;
+			foreach($files_all as $file){
+				$fileLayouTemp=$fileLayout;
+				$replace['target']=$conf['linkProc.']['target']?' target="'.$conf['linkProc.']['target'].'"':'';
+				/* class begin */
+				$fileinfo = \TYPO3\CMS\Core\Utility\GeneralUtility::split_fileref($file['filename']);
+				/* fileExt begin */
+				$fileExt=trim($fileinfo['fileext']);
+				if(\TYPO3\CMS\Core\Utility\GeneralUtility::testInt(substr($fileExt,0,1))&&$conf['classes.']['ext.']['prefixIfFirstNumber']!=''){
+					$fileExt=$conf['classes.']['ext.']['prefixIfFirstNumber'].$fileExt;
+				};
+				$replace['fileext']=$fileExt;
+				/* fileExt end */
+				/* fileExt config begin */
+				$extFileLayout=$this->cObj->stdWrap($conf['layout.']['filetype.'][strtolower($fileExt)],$conf['layout.']['filetype.'][strtolower($fileExt).'.']);
+				if($extFileLayout!=''){
+					if(strpos($extFileLayout,'###ICON###')!==false){$useIcon=true;}else{$useIcon=false;}
+					if($useIcon){$search['icon']='###ICON###';}
+					if(intval($this->cObj->data['filelink_size'])>0){
+						$extFileLayout=str_replace('###FILESIZE###',$fileSizeLayout,$extFileLayout);
+					}else{
+						$extFileLayout=str_replace('###FILESIZE###','',$extFileLayout);
+					};
+					$fileLayouTemp=$extFileLayout;
+				}
+				/* fileExt config end */
+                    $fileLayouTemp=str_replace('###DESCRIPTION###',$file['description'],$fileLayouTemp);// aby som mohol zamenit description
+                    /* additionalClass begin */
+                    $replace['additionalclass']=trim($additionalClass[trim($fileinfo['fileext'])]);
+                    /* additional class end */
+                    /* firstlastoddeven begin */
+                    $firstlastoddeven='';
+                    if((intval($conf['classes.']['addFirst'])==1)&&($fileCounter==1)){$firstlastoddeven.=' first';};
+                    if((intval($conf['classes.']['addOdd'])==1)&&($odd)){
+                    	$firstlastoddeven.=' odd';
+                    	$odd=false;
+                    }else{
+                    	if(intval($conf['classes.']['addEven'])==1){
+                    		$firstlastoddeven.=' even';
+                    		$odd=true;
+                    	};
+                    };
+                    if((intval($conf['classes.']['addLast'])==1)&&($fileCounter==$fileCount)){$firstlastoddeven.=' last';};
+                    $replace['firstlastoddeven']=trim($firstlastoddeven);
+                    /* firstlastoddeven end */
+                    $class=$fileExt;
+                    if($additionalClassOut!=''){$class.=' '.$additionalClassOut;};
+                    if(trim($firstlastoddeven)!=''){$class.=' '.trim($firstlastoddeven);};
+                    $replace['class']=$class;
+                    /* class end */
+                    if($useIcon){
+                    	$GLOBALS['TSFE']->register['ICON_REL_PATH'] = $file['url'];
+						//$replace['icon']=$this->getIcon($replace['fileext'],$conf['linkProc.']);
+                    	$replace['icon']=$this->getIcon($replace['fileext'],$conf['linkProc.'],$file['url']);
+                    }
+                    $replace['url']=$this->getFileUrl($file['url'],$conf['linkProc.'],$file);
+                    $replace['title']=trim($file['title']);
+                    if($conf['title.']['trimExt']){
+                    	$replace['title']=substr($replace['title'],0,-(strlen($replace['fileext'])+1));
+                    }
+                    $replace['counter']=$fileCounter;
+
+                    $fileSizeFormat=$this->FileSizeFormat(trim($file['size']),$conf['layout.']['fileSize.']);
+                    $replace['size']=$fileSizeFormat['size'];
+                    $replace['sizeformat']=$fileSizeFormat['sizeformat'];
+                    $replace['filename']=$file['filename'];
+
+                    $fileLayouTemp=$this->fillFileMarkers($conf['layout.']['userMarker.'],$fileLayouTemp,$file,$fileCount,$fileExt);
+                    $return_files[]=str_replace($search,$replace,$fileLayouTemp);
+                    $fileCounter++;
+                };
+                /* global markers BEGIN */
+                $globalLayout=$this->fillGlobalMarkers($conf['layout.']['userMarker.']['global.'],$globalLayout,$fileCount);
+                $return_content=str_replace('###FILE###',implode(' ',$return_files),$globalLayout);
+                $return_content=str_replace('###FILECOUNT###',$fileCount,$return_content);
+                $return_content=str_replace('###LAYOUT###',$fileLinksLayout,$return_content);
+                /* global markers END */
+                /* hide not processed markers begin */
+                if(intval($conf['layout.']['hideNotProcessedMarkers'])==1){
+                	$return_content=preg_replace('/###([a-zA-Z0-9_-]*)###/','',$return_content);
+                };
+                /* hide not processed markers end */
+                /* editicon begin */
+                if ($conf['stdWrap.']) {
+                	$return_content = $this->cObj->stdWrap($return_content, $conf['stdWrap.']);
+                }
+                /* editicons end */
+
+                return $return_content;
+            };
+        }
 
 		/**
- * Returns an object reference to the hook object if any
- *
- * @param	string		Name of the function you want to call / hook key
- * @return	object		Hook object, if any. Otherwise null.
- */
-		function &hookRequest($functionName)	{
+		 * Returns an object reference to the hook object if any
+		 *
+		 * @param	string		Name of the function you want to call / hook key
+		 * @return	object		Hook object, if any. Otherwise null.
+		 */
+		function &hookRequest($functionName)	
+		{
 			global $TYPO3_CONF_VARS;
 
 				// Hook: menuConfig_preProcessModMenu
@@ -565,29 +569,29 @@
 
 
 		/**
- * Returns an array of object reference to the hook object if any
- *
- * @param	string		Name of the function you want to call / hook key
- * @return	array		Array of Hook objects or empty array.
- */
-		function hookRequestMore($functionName)	{
+		 * Returns an array of object reference to the hook object if any
+		 *
+		 * @param	string		Name of the function you want to call / hook key
+		 * @return	array		Array of Hook objects or empty array.
+		 */
+		function hookRequestMore($functionName)	
+		{
 			global $TYPO3_CONF_VARS;
 
 			$hookObjectsArr=array();
 			$i=0;
 			if (is_array($TYPO3_CONF_VARS['EXTCONF']['css_filelinks']['pi1_hooks_more'][$functionName])){
 				foreach ($TYPO3_CONF_VARS['EXTCONF']['css_filelinks']['pi1_hooks_more'][$functionName] as $classRef){
-	        		$hookObjectsArr[$i] = &\TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($classRef);
-	        		$hookObjectsArr[$i]->pObj = &$this;
-	        		$i++;
-	    		}
-	    		return $hookObjectsArr;
+					$hookObjectsArr[$i] = &\TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($classRef);
+					$hookObjectsArr[$i]->pObj = &$this;
+					$i++;
+				}
+				return $hookObjectsArr;
 			}
 		}
 
 	}
 
-	if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/css_filelinks/class.tx_cssfilelinks.php'])	{
-		include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/css_filelinks/class.tx_cssfilelinks.php']);
-	}
-?>
+if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/css_filelinks/class.tx_cssfilelinks.php'])	{
+	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/css_filelinks/class.tx_cssfilelinks.php']);
+}

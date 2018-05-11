@@ -1,0 +1,18 @@
+{
+    "name": "hojaonline/css_filelinks",
+    "description": "CSS based, XHTML and accessibility compliant implementation of the FILELINKS cObject.",
+    "type": "typo3-cms-extension",
+    "version": "0.2.19",
+    "license": "GPL-3.0+",
+    "require": {
+        "typo3/cms-core": ">=6.2.0,<9.0.0"
+    },
+    "authors": [
+        {
+            "name": "Hoja.M.A",
+            "email": "hoja@tnt-graphics.ch",
+            "homepage": "http://www.hoja.in/"
+        }
+    ],
+    "minimum-stability": "dev"
+}
